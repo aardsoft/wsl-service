@@ -1,0 +1,157 @@
+* WSL Service                                                         :TOC_4:
+  - [[#introduction][Introduction]]
+  - [[#setting-up-a-service][Setting up a service]]
+  - [[#useful-powershell-bits-for-non-windows-people][Useful powershell bits for non-Windows people]]
+    - [[#services][Services]]
+    - [[#processes][Processes]]
+  - [[#manual-wsl-install][manual wsl install]]
+  - [[#logging][Logging]]
+  - [[#building][Building]]
+    - [[#msys2][msys2]]
+  - [[#api-documentation][API documentation]]
+  - [[#links-to-related-projects][Links to related projects]]
+  - [[#linkdump][Linkdump]]
+
+** Introduction
+This is a simple tool to start services inside WSL using Windows services. On Windows side a lightweight service program executes WSL, starts a service script in there, and restarts it if needed. Read the background section for more technical details. Supported Windows versions are the latest long term release as well as releases published since then still receiving support (i.e., currently 1809 onwards).
+
+The recommended way of installation is to use the MSI installer. To get individual binaries, or to rebuild your own copy of the installer read the Building section.
+
+Services reside in =/etc/wsl-service=, and are expected to be sourceable by bash, with the final command being =exec= to a non-detaching service binary. For example, to start the SSH daemon the service file might look like this:
+
+#+BEGIN_SRC sh
+/usr/sbin/sshd-gen-keys-start
+exec /usr/sbin/sshd -D
+#+END_SRC
+
+The WSL Service tools will wrap this in a bash script (see =start-service-template.sh=) which saves the Linux process ID, and monitors the process. On service shutdown a separate bash script (=stop-service-template=) is executed, trying to end the service both gracefully and hard on Linux side (kill and kill -9), before shutting down the thread on Windows side.
+
+Two binaries are provided:
+
+=wsl-service.exe= contains the service program implementation, and is used to register a service with the Windows services facility. See the 'Setting up a service' section on how to use it.
+
+=wsl-tool.exe= is an interactive tool used for debugging issues with services interactively.
+
+In the future monitoring of detaching daemons might be added - the main issue here is the lack of cross platform process monitoring and no obvious connection between Windows and Linux process IDs. Therefore monitoring detached daemons might require polling, which is rather inefficient and a tradeoff between using resources and long restart delays.
+
+** Setting up a service
+
+** Useful powershell bits for non-Windows people
+*** Services
+
+The [[https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service][get-service]] cmdlet is used for figuring out what is installed. By itself it will just print all services. A single string argument which may contain one or more asterisks for wildcard matching limits the result to service names. The argument -Displayname with again string argument supporting wildcards searches the display name.
+
+*** Processes
+
+Get a list of processes for user =wsl=:
+
+#+BEGIN_SRC sh
+get-process -includeusername | where-object {$_.username -match "wsl"}
+#+END_SRC
+
+This needs to run as admin, because Windows.
+
+** manual wsl install
+
+- Download the appx from store or distribution sites
+- rename the .appx to .zip
+- unpack: Expand-Archive opensuse.zip
+- import:  wsl --import opensuse wsl\opensuse .\opensuse\install.tar.gz --version 1
+
+** Logging
+
+All tools have the ability to log to several different facilities. Currently the following are supported:
+
+- Windows Event Log
+- Console
+- File
+
+Different configurations are used for interactive (wsl-tool) and non-interactive (wsl-service) use. Exact log level definitions can be found in =wsl-log.h=. The lower the number the higher the urgency of the event. Messages are logged when an events log level equels or is smaller than the configured log level. Level 0 is not used in any message, allowing it to be used to completely disabling logging to a facility.
+
+Additionaly, file logging only works if a log file is set, which is not configured per default. As log levels are pre-configured for file logging only a log file needs to be configured to enable it.
+
+
+The default settings for interactive use are INFO (50) for console, ERROR (30) for event log and WARNING (40) for file logging.
+
+The default settings for non-interactive use are DISABLED (0) for console, INFO (50) for event log and VERBOSE (60) for file logging.
+
+Log settings are configured in the registry under =HKLM\SOFTWARE\WslService= in the sub-keys =Interactive= and =Non-Interactive=. The key values for the different facilites are:
+
+- LogLevelEventLog
+- LogLevelConsole
+- LogLevelFile
+
+Those settings are configured by the MSI installer, and need to be manually created when not using the installer. Without keys present the default for all facilities is DISABLED.
+
+For event logging the DLL with the message definition needs to be registered. The MSI installer automatically does it, for manual installation the values =TypesSupported= with DWORD-data =7= and =EventMessageFile= with SZ-data containing the full path to =wsl-service-events.dll= need to be created in the key =SYSTEM\CurrentControlSet\Services\EventLog\Application\WslService=.
+
+** Building
+
+The following build requirements are needed:
+
+- GNU make
+- 64bit MinGW C-compiler and binutils. Additionally, the MinGW distribution needs to contain:
+  - windmc
+  - windres
+  - dlltool
+  - libintl
+- wixl from [[https://wiki.gnome.org/msitools][msitools]]
+
+All tools apart from wixl may be prefixed with an identifier for cross compliation. Per default cross compilation with a prefix of =x86_64-w64-mingw32-= is assumed. If that matches the build machine a simple =make= should build everything.
+
+To build natively on Windows (untested) =make CROSS== should work, to specify a different prefix use =make CROSS=my-custom-prefix-=.
+
+MingW is expected to use sysroot. =gcc -print-sysroot= is used to locate dlls required for using popt (=libpopt-0.dll= and =libintl-8.dll=).
+
+Some GNU specific features (like getopt) are used. Therefore this won't compile using Visual Studio, and is unlikely to be easily portable.
+
+The build always produces a MSI installer, which usually should be used over copying individual files. See the logging section about manually setting up registry keys when not using the MSI installer.
+
+*** msys2
+
+This should install everything required for building:
+
+#+BEGIN_SRC bash
+pacman -S mingw-w64-clang-aarch64-clang mingw-w64-clang-aarch64-arm-none-eabi-binutils
+#+END_SRC
+
+** API documentation
+
+This is a list of links to Microsoft documentation which may be useful for other people not really that familiar with Windows development as well:
+
+- [[https://docs.microsoft.com/en-us/windows/win32/winprog/windows-data-types][Windows Data Types.]] Essential information not to get lost in the mess of type definitions when coming from the UNIX world.
+- [[https://docs.microsoft.com/en-us/windows/win32/learnwin32/introduction-to-windows-programming-in-c--]['Intro to Win32 programming in C++']]. Even though this is C still some interesting points, especially the comments about [[https://docs.microsoft.com/en-us/windows/win32/learnwin32/working-with-strings][(Unicode) strings]].
+- [[https://docs.microsoft.com/en-us/windows/win32/api/wslapi/][WSL API overview]]
+- [[https://docs.microsoft.com/en-us/windows/console/console-functions][Console API]]. This is useful for the interactive tools.
+- [[https://docs.microsoft.com/en-us/windows/win32/services/service-programs][Service Programs API]]. Quick starting point might be [[https://docs.microsoft.com/en-us/windows/win32/services/service-servicemain-function][ServiceMain documentation]].
+- [[https://docs.microsoft.com/en-us/windows/win32/wes/windows-event-log][Event Log API]]. We're currently using the old [[https://docs.microsoft.com/en-us/windows/win32/eventlog/event-logging][Event Logging API]]. Both seem to be rather horrible.
+
+https://docs.microsoft.com/en-us/windows/win32/api/strsafe/nf-strsafe-stringcbprintfa
+https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createthread
+https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lstrcata
+https://docs.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-reggetvaluea
+
+** Links to related projects
+
+- [[https://github.com/Microsoft/WSL-distrolauncher][WSL Distro Launcher Reference Implementation]]
+- [[https://github.com/DDoSolitary/LxRunOffline][LxRunOffline]], an easy to use utility for managing WSL
+- [[https://github.com/yuk7/wsldl][Another utility for managing WSL]]
+- [[https://gist.github.com/dentechy/de2be62b55cfd234681921d5a8b6be11][Suggestions for running sshd in WSL automatically]]. This might be enough for many, but didn't provide sufficient control over the daemon process lifecycle.
+
+** Linkdump
+- https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithtokenw
+- https://social.msdn.microsoft.com/forums/vstudio/en-US/630e28ba-ad22-44e9-b17d-0abb24af8d87/returning-an-lptstr-allocatingfreeing-memory
+- https://support.industry.siemens.com/tf/WW/en/posts/should-memory-be-freed-after-char-lpcstr-function-call/56460?page=0
+- https://docs.microsoft.com/en-us/windows/win32/services/service-programs
+- https://docs.microsoft.com/en-us/windows/win32/eventlog/reporting-an-event
+- https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror
+- https://docs.microsoft.com/en-us/windows/win32/api/strsafe/nf-strsafe-stringcbvprintfw
+- https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
+- https://stackoverflow.com/questions/39111074/error-234-more-data-is-available-with-regqueryinfokey-and-regenumvalue
+- https://docs.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-reggetvaluea
+- https://0x00-0x00.github.io/research/2018/10/17/Windows-API-and-Impersonation-Part1.html
+- https://0x00-0x00.github.io/research/2018/10/21/Windows-API-And-Impersonation-Part-2.html
+- https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-impersonateanonymoustoken
+- https://serverfault.com/questions/562905/unexpected-anonymous-login-in-windows-security-logs
+- https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.management/new-service?view=powershell-6
+- https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/get-credential?view=powershell-6

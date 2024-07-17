@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+  <Product Name='Service handler for WSL' Manufacturer='Aardsoft Oy'
+           Id='b9898af3-7659-464d-8838-d46bec5b71b9'
+           UpgradeCode='4d51cb9e-cffa-4005-a67f-5454adb28b08'
+           Language='1033' Codepage='1252' Version='0.0.1'>
+    <Package Id='*' Keywords='Installer' Description="Installer for wsl-service"
+             Comments='Foobar is a registered trademark of Acme Ltd.' Manufacturer='Aardsoft Oy'
+             InstallerVersion='200' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFilesFolder' Name='PFiles'>
+        <Directory Id='Aardsoft' Name='Aardsoft'>
+          <Directory Id='INSTALLDIR' Name='wsl-service'>
+
+            <Component Id='ServiceExecutable' Guid='74e203b0-57ba-4c60-9338-d535584587f4' Win64='yes'>
+              <File Id='wsl-serviceEXE' Name='wsl-service.exe' DiskId='1' Source='build/wsl-service.exe' KeyPath='yes'/>
+            </Component>
+            <Component Id='ToolExecutable' Guid='57fd44a4-db9f-4124-9938-ab9a34cf380e' Win64='yes'>
+              <File Id='wsl-toolEXE' Name='wsl-tool.exe' DiskId='1' Source='build/wsl-tool.exe' KeyPath='yes'/>
+            </Component>
+            <Component Id='EventsDLL' Guid='f9c1fc02-194f-4993-b10e-f171bf2a811d' Win64='yes'>
+              <File Id='wsl-service-eventsDLL' Name='wsl-service-events.dll' DiskId='1' Source='build/wsl-service-events.dll' KeyPath='yes'/>
+              <RegistryKey Id='EventsDllRegKeys' Root='HKLM' Key='SYSTEM\CurrentControlSet\Services\EventLog\Application\WslService'>
+                <RegistryValue Type='string' Name='EventMessageFile' Value='[INSTALLDIR]wsl-service-events.dll' />
+                <RegistryValue Type='integer' Name='TypesSupported' Value='7' />
+              </RegistryKey>
+              <RegistryKey Id='EventsDllRegKeys' Root='HKLM' Key='Software\WslService'>
+                <RegistryValue Type='string' Name='InstallDir' Value='[INSTALLDIR]'/>
+              </RegistryKey>
+              <RegistryKey Id='EventsDllRegKeys' Root='HKLM' Key='Software\WslService\Interactive'>
+                <RegistryValue Type='integer' Name='LogLevelConsole' Value='50'/>
+                <RegistryValue Type='integer' Name='LogLevelFile' Value='60'/>
+                <RegistryValue Type='integer' Name='LogLevelEventLog' Value='30'/>
+              </RegistryKey>
+              <RegistryKey Id='EventsDllRegKeys' Root='HKLM' Key='Software\WslService\Non-Interactive'>
+                <RegistryValue Type='integer' Name='LogLevelConsole' Value='0'/>
+                <RegistryValue Type='integer' Name='LogLevelFile' Value='60'/>
+                <RegistryValue Type='integer' Name='LogLevelEventLog' Value='50'/>
+              </RegistryKey>
+            </Component>
+            <Component Id='PoptDLL' Guid='915cdde0-ca6e-4e4c-8bd9-a853cf162f0a' Win64='yes'>
+              <File Id='libpoptDLL' Name='libpopt.dll' DiskId='1' Source='build/libpopt.dll' KeyPath='yes'/>
+            </Component>
+            <Component Id='intlDLL' Guid='175561ac-6a91-4170-a365-975b91ff7217' Win64='yes'>
+              <File Id='libintlDLL' Name='libintl-8.dll' DiskId='1' Source='build/libintl-8.dll' KeyPath='yes'/>
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <Feature Id='Complete' Level='1'>
+      <ComponentRef Id='ServiceExecutable' />
+      <ComponentRef Id='ToolExecutable' />
+      <ComponentRef Id='EventsDLL' />
+    </Feature>
+  </Product>
+</Wix>
