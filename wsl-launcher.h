@@ -33,9 +33,10 @@ LPWSTR defaultWslDistributionName();
 /** Set the default UID
  *
  * @param uid the UID to set
+ * @param save save the current UID
  * @return the old UID
  */
-ULONG wslSetUid(ULONG uid);
+ULONG wslSetUid(ULONG uid, BOOL save);
 /** Set the default UID to 0, and save UID for later restoration
  *
  * This function tries to guard against being called multiple times

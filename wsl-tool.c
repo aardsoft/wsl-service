@@ -203,7 +203,8 @@ int main(int argc, char** argv){
       case 'U':
         break;
       case 'I':
-        if (action != WSL_SETUID) errDuplicateActions();
+        if (action != WSL_NONE) errDuplicateActions();
+        action = WSL_SETUID;
         break;
       case 'r':
         if (action != WSL_NONE) errDuplicateActions();

@@ -60,7 +60,7 @@ HANDLE startWslServiceThreadInteractive(LPWSTR serviceName, ULONG uid){
     wslLog(L_DEBUG, L"Distribution '%s' is available\n", defaultDist);
   }
 
-  wslSetUid(uid);
+  wslSetUid(uid, TRUE);
   hThread = CreateThread(NULL,0,
                          (LPTHREAD_START_ROUTINE)wslServiceThreadInteractive,
                          service,0,&threadId);
@@ -70,6 +70,8 @@ HANDLE startWslServiceThreadInteractive(LPWSTR serviceName, ULONG uid){
     return NULL;
   } else {
     wslLogText(L_DEBUG, L"WSL launched\n");
+    ///TODO: figure out a better way to delay resetting the UID
+    Sleep(2000);
     wslRestoreUid();
   }
 
@@ -177,7 +179,7 @@ LPWSTR defaultWslDistributionName(){
   return regValue;
 }
 
-ULONG wslSetUid(ULONG uid){
+ULONG wslSetUid(ULONG uid, BOOL save){
   ULONG _ver, _uid;
   WSL_DISTRIBUTION_FLAGS _flags;
   PSTR *_env;
@@ -196,6 +198,12 @@ ULONG wslSetUid(ULONG uid){
 
   WslConfigureDistribution(defaultDistW, uid, _flags);
   wslLog(L_INFO, L"Setting UID to %i\n", uid);
+
+  if (save && _uid != 0){
+    defaultUID = _uid;
+    distributionFlags = _flags;
+  }
+
   return _uid;
 }
 
