@@ -1,0 +1,28 @@
+name: Build and publish
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  login:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Build gettext
+        run: |
+          sudo apt-get install -y make cmake mingw-w64 msitools wixl doxygen
+          make
+      - name: Commit Doxygen documentation
+        run: |
+          ( cat doc/Doxyfile ; echo "OUTPUT_DIRECTORY=doc" ) | doxygen -
+          git config --local user.email "invalid@aardsoft.fi"
+          git config --local user.name "Github Action"
+          git add --all
+          git commit -m "Update doxygen documentation" -a
+          git push "https://${GITHUB_ACTOR}:${INPUT_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
