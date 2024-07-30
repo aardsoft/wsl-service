@@ -6,6 +6,7 @@ IF (NOT TOOLCHAIN)
     SET(TOOLCHAIN "x86_64-w64-mingw32-")
 ENDIF()
 
+SET(CMAKE_INCLUDE_PATH  ../gettext/x86_64/usr/include)
 # which compilers to use for C and C++
 SET(CMAKE_C_COMPILER ${TOOLCHAIN}gcc)
 SET(CMAKE_CXX_COMPILER ${TOOLCHAIN}g++)

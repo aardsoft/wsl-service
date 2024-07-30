@@ -10,8 +10,6 @@ CC=gcc
 MC=windmc
 RC=windres
 DLLTOOL=dlltool
-MINGW_DLLS=libintl-8.dll
-MINGW_SYSROOT=$(shell $(CROSS)$(CC) -print-sysroot)
 endif
 Q=@
 #LDFLAGS=-lwslapi.a
@@ -19,6 +17,7 @@ Q=@
 CFLAGS=-DUNICODE -D_UNICODE
 WIXL=wixl
 WIXLFLAGS=-a x64
+LIBINTL_DLL=gettext/x86_64/usr/bin/libintl-8.dll
 POPT_DLL=build/popt/src/libpopt.dll
 INCLUDES=-Ipopt/src/ -Ibuild
 OUT=build
@@ -37,7 +36,7 @@ $(POPT_DLL):
 	$(Q)cmake --toolchain ../toolchain.cmake -B build/popt -S popt && cmake --build build/popt
 
 copy-mingw-dlls:
-	$(Q)for f in $(MINGW_DLLS); do find $(MINGW_SYSROOT) -name $$f -exec cp '{}' build/ \;; done
+	$(Q)for f in $(LIBINTL_DLL); do cp $$f build/; done
 	$(Q)for f in $(POPT_DLL); do cp $$f build/; done
 
 $(OUT)/wsl-templates.h: start-service-template.sh stop-service-template.sh

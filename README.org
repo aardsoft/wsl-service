@@ -94,16 +94,11 @@ The following build requirements are needed:
   - windmc
   - windres
   - dlltool
-  - libintl
 - wixl from [[https://wiki.gnome.org/msitools][msitools]]
 
 All tools apart from wixl may be prefixed with an identifier for cross compliation. Per default cross compilation with a prefix of =x86_64-w64-mingw32-= is assumed. If that matches the build machine a simple =make= should build everything.
 
 To build natively on Windows (untested) =make CROSS== should work, to specify a different prefix use =make CROSS=my-custom-prefix-=.
-
-MingW is expected to use sysroot. =gcc -print-sysroot= is used to locate dlls required for using popt (=libpopt-0.dll= and =libintl-8.dll=).
-
-Some GNU specific features (like getopt) are used. Therefore this won't compile using Visual Studio, and is unlikely to be easily portable.
 
 The build always produces a MSI installer, which usually should be used over copying individual files. See the logging section about manually setting up registry keys when not using the MSI installer.
 
