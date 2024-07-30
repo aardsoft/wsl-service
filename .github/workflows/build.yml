@@ -11,18 +11,26 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Build gettext
         run: |
           sudo apt-get install -y make cmake mingw-w64 msitools wixl doxygen
           make
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: |
+            build/*.exe
+            build/*.dll
+            build/*.msi
       - name: Commit Doxygen documentation
         run: |
           ( cat doc/Doxyfile ; echo "OUTPUT_DIRECTORY=doc" ) | doxygen -
           git config --local user.email "invalid@aardsoft.fi"
           git config --local user.name "Github Action"
           git add --all
-          git commit -m "Update doxygen documentation" -a
+          git commit -m "Update doxygen documentation" -a || true
           git push "https://${GITHUB_ACTOR}:${INPUT_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
