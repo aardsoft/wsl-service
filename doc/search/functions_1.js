@@ -6,5 +6,5 @@ var searchData=
   ['wslrestoreuid_3',['wslrestoreuid',['../wsl-launcher_8c.html#a65a0a6a8181f7cc5a02cab7b36279544',1,'wslRestoreUid():&#160;wsl-launcher.c'],['../wsl-launcher_8h.html#a65a0a6a8181f7cc5a02cab7b36279544',1,'wslRestoreUid():&#160;wsl-launcher.c']]],
   ['wslservicethreadinteractive_4',['wslservicethreadinteractive',['../wsl-launcher_8c.html#ac56aaa15a25bf501d03d2ad309010eff',1,'wslServiceThreadInteractive(WCHAR *serviceName):&#160;wsl-launcher.c'],['../wsl-launcher_8h.html#ac56aaa15a25bf501d03d2ad309010eff',1,'wslServiceThreadInteractive(WCHAR *serviceName):&#160;wsl-launcher.c']]],
   ['wslsetrootuid_5',['wslsetrootuid',['../wsl-launcher_8c.html#a9cec8bede1fed4efe30954377d2dccce',1,'wslSetRootUid():&#160;wsl-launcher.c'],['../wsl-launcher_8h.html#a9cec8bede1fed4efe30954377d2dccce',1,'wslSetRootUid():&#160;wsl-launcher.c']]],
-  ['wslsetuid_6',['wslsetuid',['../wsl-launcher_8c.html#a961d4b5e6a97c3e99143484e126fee92',1,'wslSetUid(ULONG uid):&#160;wsl-launcher.c'],['../wsl-launcher_8h.html#a961d4b5e6a97c3e99143484e126fee92',1,'wslSetUid(ULONG uid):&#160;wsl-launcher.c']]]
+  ['wslsetuid_6',['wslsetuid',['../wsl-launcher_8c.html#ab2eb1c6af8189f5eb8157cf3241412af',1,'wslSetUid(ULONG uid, BOOL save):&#160;wsl-launcher.c'],['../wsl-launcher_8h.html#ab2eb1c6af8189f5eb8157cf3241412af',1,'wslSetUid(ULONG uid, BOOL save):&#160;wsl-launcher.c']]]
 ];

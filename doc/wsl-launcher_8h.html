@@ -91,8 +91,8 @@ Functions</h2></td></tr>
 <tr class="memitem:a440d7957d790bc46d35352b61ed52f14" id="r_a440d7957d790bc46d35352b61ed52f14"><td class="memItemLeft" align="right" valign="top"><a id="a440d7957d790bc46d35352b61ed52f14" name="a440d7957d790bc46d35352b61ed52f14"></a>
 LPWSTR&#160;</td><td class="memItemRight" valign="bottom"><b>defaultWslDistributionName</b> ()</td></tr>
 <tr class="separator:a440d7957d790bc46d35352b61ed52f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a961d4b5e6a97c3e99143484e126fee92" id="r_a961d4b5e6a97c3e99143484e126fee92"><td class="memItemLeft" align="right" valign="top">ULONG&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="wsl-launcher_8h.html#a961d4b5e6a97c3e99143484e126fee92">wslSetUid</a> (ULONG uid)</td></tr>
-<tr class="separator:a961d4b5e6a97c3e99143484e126fee92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2eb1c6af8189f5eb8157cf3241412af" id="r_ab2eb1c6af8189f5eb8157cf3241412af"><td class="memItemLeft" align="right" valign="top">ULONG&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="wsl-launcher_8h.html#ab2eb1c6af8189f5eb8157cf3241412af">wslSetUid</a> (ULONG uid, BOOL save)</td></tr>
+<tr class="separator:ab2eb1c6af8189f5eb8157cf3241412af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9cec8bede1fed4efe30954377d2dccce" id="r_a9cec8bede1fed4efe30954377d2dccce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="wsl-launcher_8h.html#a9cec8bede1fed4efe30954377d2dccce">wslSetRootUid</a> ()</td></tr>
 <tr class="separator:a9cec8bede1fed4efe30954377d2dccce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65a0a6a8181f7cc5a02cab7b36279544" id="r_a65a0a6a8181f7cc5a02cab7b36279544"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="wsl-launcher_8h.html#a65a0a6a8181f7cc5a02cab7b36279544">wslRestoreUid</a> ()</td></tr>
@@ -143,6 +143,7 @@ STARTUPINFO&#160;</td><td class="memItemRight" valign="bottom"><b>startupInfo</b
   </table>
   </dd>
 </dl>
+<p>TODO: figure out a better way to delay resetting the UID</p>
 
 </div>
 </div>
@@ -232,8 +233,8 @@ STARTUPINFO&#160;</td><td class="memItemRight" valign="bottom"><b>startupInfo</b
 
 </div>
 </div>
-<a id="a961d4b5e6a97c3e99143484e126fee92" name="a961d4b5e6a97c3e99143484e126fee92"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a961d4b5e6a97c3e99143484e126fee92">&#9670;&#160;</a></span>wslSetUid()</h2>
+<a id="ab2eb1c6af8189f5eb8157cf3241412af" name="ab2eb1c6af8189f5eb8157cf3241412af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2eb1c6af8189f5eb8157cf3241412af">&#9670;&#160;</a></span>wslSetUid()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -242,8 +243,18 @@ STARTUPINFO&#160;</td><td class="memItemRight" valign="bottom"><b>startupInfo</b
           <td class="memname">ULONG wslSetUid </td>
           <td>(</td>
           <td class="paramtype">ULONG&#160;</td>
-          <td class="paramname"><em>uid</em></td><td>)</td>
+          <td class="paramname"><em>uid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">BOOL&#160;</td>
+          <td class="paramname"><em>save</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -251,6 +262,7 @@ STARTUPINFO&#160;</td><td class="memItemRight" valign="bottom"><b>startupInfo</b
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">uid</td><td>the UID to set </td></tr>
+    <tr><td class="paramname">save</td><td>save the current UID </td></tr>
   </table>
   </dd>
 </dl>
