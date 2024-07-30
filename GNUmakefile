@@ -24,7 +24,7 @@ OUT=build
 
 $(foreach v, $(.VARIABLES), $(info $(v) = $($(v))))
 
-all: $(OUT)/wsl-templates.h $(OUT)/wsl-service-events.dll $(OUT)/wsl-tool.exe $(OUT)/wsl-service.exe $(OUT)/wsl-service.msi $(OUT)/doc/html/index.html
+all: $(OUT)/wsl-templates.h $(OUT)/wsl-service-events.dll $(OUT)/wsl-tool.exe $(OUT)/wsl-service.exe $(OUT)/wsl-service.msi
 
 CORE_OBJECTS=$(OUT)/wsl-launcher.o $(OUT)/wsl-log.o $(OUT)/wslapi.a
 ALL_HEADERS=wsl-launcher.h wsl-log.h wslapi.h
