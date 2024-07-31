@@ -14,7 +14,7 @@ endif
 Q=@
 #LDFLAGS=-lwslapi.a
 #LDFLAGS=-lpopt.dll
-CFLAGS=-DUNICODE -D_UNICODE
+CFLAGS=-DUNICODE -D_UNICODE -Wall
 WIXL=wixl
 WIXLFLAGS=-a x64
 LIBINTL_DLL=gettext/x86_64/usr/bin/libintl-8.dll
@@ -88,9 +88,12 @@ $(OUT)/wsl-service.exe: $(OUT)/wsl-service.o $(CORE_OBJECTS)
 	$(Q)echo "LD $@"
 	$(Q)$(CROSS)$(CC) $(LDFLAGS) $(INCLUDES) -o $@ $^ $(LIBS)
 
+dist-clean: clean
+	$(Q)rm -Rf $(OUT)/popt
+
 clean:
 	$(Q)echo "Cleaning up"
-	$(Q)rm -Rf $(OUT)/*.bin $(OUT)/*.exe $(OUT)/*.rc $(OUT)/*.dll $(OUT)/*.o $(OUT)/*.ro $(OUT)/*.a $(OUT)/*.msi $(OUT)//*.h $(OUT)/*.res $(OUT)/popt
+	$(Q)rm -f $(OUT)/*.bin $(OUT)/*.exe $(OUT)/*.rc $(OUT)/*.dll $(OUT)/*.o $(OUT)/*.ro $(OUT)/*.a $(OUT)/*.msi $(OUT)//*.h $(OUT)/*.res
 
 $(OUT)/wsl-service.msi: $(OUT)/wsl-service.exe $(OUT)/wsl-tool.exe $(OUT)/wsl-service-events.dll wsl-service.wxs copy-mingw-dlls
 	$(Q)echo "MSI $@"
