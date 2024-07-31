@@ -107,9 +107,10 @@ int main(int argc, char** argv){
   poptContext optCon;
 
   int optDefaultUid;
-  LPCWSTR optDistribution = NULL;
-  LPCWSTR optDistributionTar = NULL;
-  LPCWSTR optService = NULL;
+  LPCSTR optDistributionA = NULL;
+  LPWSTR optDistribution = NULL;
+  LPCSTR optDistributionTarA = NULL;
+  LPCSTR optServiceA = NULL;
 
   // distribution variables
   ULONG distVer, distUid;
@@ -146,11 +147,11 @@ int main(int argc, char** argv){
       "Export the distribution. Requires -d, -t and -p" },
     { "path", 'p', 0, 0, 'p',
       "The filesystem path to a distribution" },
-    { "tar", 't', POPT_ARG_STRING, &optDistributionTar, 't',
+    { "tar", 't', POPT_ARG_STRING, &optDistributionTarA, 't',
       "The tar file for export/import" },
-    { "run", 'r', POPT_ARG_STRING, &optService, 'r',
+    { "run", 'r', POPT_ARG_STRING, &optServiceA, 'r',
       "Run the service script" },
-    { "stop", 's', POPT_ARG_STRING, &optService, 's',
+    { "stop", 's', POPT_ARG_STRING, &optServiceA, 's',
       "Stop the service script" },
     { "setdefault", '\0', 0, 0, 'D',
       "Set the default distribution specified with -d" },
@@ -172,8 +173,14 @@ int main(int argc, char** argv){
   optCon = poptGetContext(NULL, argc, (const char **)argv, optionsTable, 0);
 
   // -d
-  if (optDistribution == NULL){
+  if (optDistributionA == NULL){
     optDistribution = defaultWslDistributionName();
+  } else {
+    int r = wslAtoW(optDistributionA, &optDistribution);
+    if (r == -1){
+      wprintf(L"Error during wide character conversion, bailing out...\n");
+      exit(1);
+    }
   }
 
   // following switches just copy arguments through popt, and don't need extra
@@ -232,8 +239,7 @@ int main(int argc, char** argv){
     case WSL_RUN:
       instanceData.uid = 0;
       instanceData.distributionName = optDistribution;
-      instanceData.command = optService;
-      HANDLE hThread = startWslServiceInteractive(&instanceData);
+      HANDLE hThread = startWslServiceInteractiveA(optServiceA, NULL, &instanceData);
       while(TRUE){
         DWORD result = WaitForSingleObject(hThread, INFINITE);
         if (result == WAIT_OBJECT_0){

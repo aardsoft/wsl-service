@@ -82,31 +82,27 @@ HANDLE startWslServiceInteractive(WslInstance *instanceData){
 }
 
 HANDLE startWslServiceInteractiveA(LPCSTR serviceName, LPCSTR distributionName, WslInstance *instanceData){
-  LPCSTR serviceNameA = strdup(serviceName);
-  LPWSTR serviceNameW;
+  LPWSTR serviceNameW = NULL;
+  LPWSTR distributionNameW = NULL;
 
-  // calculate the buffer size for the converted string
-  int len = MultiByteToWideChar(CP_ACP, 0, serviceNameA, -1,
-                                NULL, 0);
+  int r = -1;
 
-  if (len == 0){
-    wslLogText(L_ERROR, L"Unable to get buffer length\n");
-    return NULL;
+  if (serviceName != NULL){
+    r = wslAtoW(serviceName, &serviceNameW);
+    if (r == -1)
+      return NULL;
+    else
+      instanceData->command = serviceNameW;
   }
 
-  // if all worked out, allocate space, and convert the string
-  serviceNameW = (LPWSTR)malloc(len * sizeof(wchar_t));
-  len = MultiByteToWideChar(CP_ACP, 0, serviceNameA, -1,
-                            serviceNameW, len);
-
-  if (len == 0){
-    wslLogText(L_ERROR, L"Unable to convert argument to unicode\n");
-    return NULL;
+  if (distributionName != NULL){
+    r = wslAtoW(distributionName, &distributionNameW);
+    if (r == -1)
+      return NULL;
+    else
+      instanceData->distributionName = distributionNameW;
   }
 
-  instanceData->command = serviceNameW;
-
-  //HANDLE handle = startWslServiceInteractive(serviceNameW, uid);
   HANDLE handle = startWslServiceInteractive(instanceData);
   //free(serviceNameW);
   return handle;
@@ -283,3 +279,30 @@ void wslRestoreUid(){
   return defaultDistW;
   }
 */
+
+int wslAtoW(LPCSTR input, LPWSTR *output){
+  if (input == NULL)
+    return -1;
+
+  int len = MultiByteToWideChar(CP_ACP, 0,
+                                input, -1,
+                                NULL, 0);
+
+  if (len == 0){
+    wslLogText(L_ERROR, L"Unable to get buffer length\n");
+    return -1;
+  }
+
+  *output = (LPWSTR)malloc(len * sizeof(wchar_t));
+
+  len = MultiByteToWideChar(CP_ACP, 0,
+                            input, -1,
+                            *output, len);
+
+  if (len == 0){
+    wslLogText(L_ERROR, L"Unable to convert argument to unicode\n");
+    return -1;
+  }
+
+  return len;
+}

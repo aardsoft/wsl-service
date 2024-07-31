@@ -27,23 +27,29 @@ struct _WslInstance{
 
 /** Start a service inside of WSL
  *
- * @param serviceName the name of a service. Must be configured on Linux side
- * @param uid the UID to use for the service
+ * @param instanceData instance configuration
  * @return a handle to the process running a non-interactive WSL instance
  */
-HANDLE startWslService(LPWSTR serviceName, ULONG uid);
+HANDLE startWslService(WslInstance *instanceData);
 /** Start an interactive service inside of WSL
  *
  * Typically using an interactive call in a service should be avoided, though
  * it is useful for interactive tools.
  *
- * @param serviceName the name of a service. Must be configured on Linux side
- * @param uid the UID to use for the service
+ * @param instanceData instance configuration
  * @return a handle to the thread running an interactive WSL instance
  */
 HANDLE startWslServiceInteractive(WslInstance *instanceData);
-/** A convenience wrapper around startWslServiceThreadInteractive, taking an
- * 8-bit string as argument, and converting it to wide.
+/** A convenience wrapper around startWslServiceThreadInteractive, taking
+ * 8-bit strings as argument, and converting it to wide.
+ *
+ * If any of serviceName or distributionName is not NULL it'll be converted
+ * to a wide string, and stuffed into instanceData.
+ *
+ * @param serviceName the name of the service. May only be NULL if instanceData.command is set
+ * @param distributionName the name of the distribution. May always be NULL
+ * @return a handle to the thread running an interactive WSL instance
+ *
  */
 HANDLE startWslServiceInteractiveA(LPCSTR serviceName, LPCSTR distributionName, WslInstance *instanceData);
 /** This implements the WSL service thread (i.e., a Windows thread wrapper
@@ -70,6 +76,14 @@ void wslSetRootUid();
 /** Restore a UID saved by wslSetRootUid
  */
 void wslRestoreUid();
-
+/** Convert a ASCII string to wide
+ *
+ * It's up to you to free the strings later.
+ *
+ * @param input the ASCII string to convert
+ * @param output a pointer to the wide string to receive the converted string
+ * @return -1 on error, otherwise the length of the string
+ */
+int wslAtoW(LPCSTR input, LPWSTR *output);
 
 #endif
