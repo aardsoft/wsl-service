@@ -2,11 +2,12 @@ name: Build and publish
 
 on:
   push:
+    tags: ['[0-9]+.[0-9]+.[0-9]+']
     branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  login:
+  build:
     name: Build
     runs-on: ubuntu-24.04
     steps:
@@ -16,7 +17,7 @@ jobs:
           submodules: recursive
       - name: Build gettext
         run: |
-          sudo apt-get install -y make cmake mingw-w64 msitools wixl doxygen
+          sudo apt-get install -y make cmake mingw-w64 msitools wixl
           make
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -26,6 +27,18 @@ jobs:
             build/*.exe
             build/*.dll
             build/*.msi
+  doc:
+    name: Update documentation
+    runs-on: ubuntu-24.04
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install programs
+        run: |
+          sudo apt-get install -y doxygen
       - name: Commit Doxygen documentation
         run: |
           ( cat doc/Doxyfile ; echo "OUTPUT_DIRECTORY=doc" ) | doxygen -
@@ -34,3 +47,21 @@ jobs:
           git add --all
           git commit -m "Update doxygen documentation" -a || true
           git push "https://${GITHUB_ACTOR}:${INPUT_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+  release:
+    name: Release
+    needs: [ build ]
+    runs-on: ubuntu-24.04
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Pull build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts
+      - name: Publish Github Release
+        uses: ncipollo/release-action@00fc2857229c3d51311c8ff6e4954b38203edbd4
+        with:
+          artifacts: "artifacts/*.exe,artifacts/*.dll,artifacts/*.msi"
+          makeLatest: true
+          allowUpdates: true
+          generateReleaseNotes: true

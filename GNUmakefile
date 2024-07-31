@@ -22,7 +22,13 @@ POPT_DLL=build/popt/src/libpopt.dll
 INCLUDES=-Ipopt/src/ -Ibuild
 OUT=build
 
-$(foreach v, $(.VARIABLES), $(info $(v) = $($(v))))
+UUID := $(shell uuidgen)
+TAG := $(shell git describe --abbrev=0 --tags --always)
+COMMIT_COUNT := $(shell git rev-list $(TAG).. --count)
+VERSION := $(TAG).$(COMMIT_COUNT)
+
+# uncomment to debug variables
+#$(foreach v, $(.VARIABLES), $(info $(v) = $($(v))))
 
 all: $(OUT)/wsl-templates.h $(OUT)/wsl-service-events.dll $(OUT)/wsl-tool.exe $(OUT)/wsl-service.exe $(OUT)/wsl-service.msi
 
@@ -88,4 +94,5 @@ clean:
 
 $(OUT)/wsl-service.msi: $(OUT)/wsl-service.exe $(OUT)/wsl-tool.exe $(OUT)/wsl-service-events.dll wsl-service.wxs copy-mingw-dlls
 	$(Q)echo "MSI $@"
-	$(Q)$(WIXL) $(WIXLFLAGS) wsl-service.wxs -o $@
+	$(Q)sed -e "s/UUID/$(UUID)/" -e "s/VERSION/$(VERSION)/" wsl-service.wxs > $(OUT)/wsl-service.wxs
+	$(Q)$(WIXL) $(WIXLFLAGS) $(OUT)/wsl-service.wxs -o $@

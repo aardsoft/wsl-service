@@ -26,6 +26,8 @@ exec /usr/sbin/sshd -D
 
 The WSL Service tools will wrap this in a bash script (see =start-service-template.sh=) which saves the Linux process ID, and monitors the process. On service shutdown a separate bash script (=stop-service-template=) is executed, trying to end the service both gracefully and hard on Linux side (kill and kill -9), before shutting down the thread on Windows side.
 
+It is recommended to use this as the single entry point into WSL, starting a service manager inside of WSL. As WSL terminates once the last instance exits the death of the service managers guarantees a teardown of WSL, followed by a service restart triggered from the Windows service. While multiple services monitored from Windows side are technically possible doing so increases the risk of an unclean state, resulting in one or more services repeatedly failing while others stay up.
+
 Two binaries are provided:
 
 =wsl-service.exe= contains the service program implementation, and is used to register a service with the Windows services facility. See the 'Setting up a service' section on how to use it.
@@ -130,6 +132,7 @@ https://docs.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-reggetvaluea
 
 - [[https://github.com/Microsoft/WSL-distrolauncher][WSL Distro Launcher Reference Implementation]]
 - [[https://github.com/DDoSolitary/LxRunOffline][LxRunOffline]], an easy to use utility for managing WSL
+- [[https://github.com/yuk7/wsl2exe][wsl2exe]]
 - [[https://github.com/yuk7/wsldl][Another utility for managing WSL]]
 - [[https://gist.github.com/dentechy/de2be62b55cfd234681921d5a8b6be11][Suggestions for running sshd in WSL automatically]]. This might be enough for many, but didn't provide sufficient control over the daemon process lifecycle.
 

@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='windows-1252'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
   <Product Name='Service handler for WSL' Manufacturer='Aardsoft Oy'
-           Id='b9898af3-7659-464d-8838-d46bec5b71b9'
+           Id='UUID'
            UpgradeCode='4d51cb9e-cffa-4005-a67f-5454adb28b08'
-           Language='1033' Codepage='1252' Version='0.0.1'>
+           Language='1033' Codepage='1252' Version='VERSION'>
     <Package Id='*' Keywords='Installer' Description="Installer for wsl-service"
-             Comments='Foobar is a registered trademark of Acme Ltd.' Manufacturer='Aardsoft Oy'
+             Comments='This installer contains the data to install and configure WSL services. See https://github.com/aardsoft/wsl-service for details' Manufacturer='Aardsoft Oy'
              InstallerVersion='200' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -57,6 +57,8 @@
       <ComponentRef Id='ServiceExecutable' />
       <ComponentRef Id='ToolExecutable' />
       <ComponentRef Id='EventsDLL' />
+      <ComponentRef Id='PoptDLL' />
+      <ComponentRef Id='intlDLL' />
     </Feature>
   </Product>
 </Wix>
