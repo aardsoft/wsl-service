@@ -17,7 +17,7 @@ void ServiceMain(int argc, char** argv);
 void ControlHandler(DWORD request);
 int InitService();
 
-void main(){
+int main(){
   SERVICE_TABLE_ENTRY ServiceTable[2];
   ServiceTable[0].lpServiceName = L"WSL Service Monitor";
   ServiceTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
@@ -30,6 +30,10 @@ void main(){
 
 void ServiceMain(int argc, char** argv){
   int error;
+  WslInstance instanceData = {
+    .uid = -1,
+    .useCurrentWorkingDirectory = TRUE
+  };
 
   ServiceStatus.dwServiceType             = SERVICE_WIN32;
   ServiceStatus.dwCurrentState            = SERVICE_START_PENDING;
@@ -69,7 +73,7 @@ void ServiceMain(int argc, char** argv){
   while (ServiceStatus.dwCurrentState == SERVICE_RUNNING){
     wslSetRootUid();
     // TODO: use non-interactive method here
-    HANDLE hThread = startWslServiceThreadInteractive(L"service", 0);
+    HANDLE hThread = startWslServiceInteractive(&instanceData);
     Sleep(2000);
   }
   return;
@@ -77,11 +81,10 @@ void ServiceMain(int argc, char** argv){
 
 // Service initialization
 int InitService(){
-  int result;
+  int result=0;
   wslLogText(L_INFO, TEXT("Monitoring started."));
   return(result);
 }
-
 
 // Control handler function
 void ControlHandler(DWORD request){

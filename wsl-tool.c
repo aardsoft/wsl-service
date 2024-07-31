@@ -78,6 +78,7 @@ enum WSL_ACTION{
 
 int exitHandler(){
   printf("Exit handler\n");
+  return 0;
 }
 
 BOOL WINAPI consoleHandler(DWORD signal){
@@ -101,7 +102,6 @@ void errDuplicateActions(){
 }
 
 int main(int argc, char** argv){
-  LPWSTR serviceName;
   char ch;
   int action = WSL_NONE;
   poptContext optCon;
@@ -117,14 +117,12 @@ int main(int argc, char** argv){
   PSTR *distEnv;
   ULONG distEnvCnt;
 
-  _onexit(exitHandler);
+  WslInstance instanceData = {
+    .uid = -1,
+    .useCurrentWorkingDirectory = TRUE
+  };
 
-  static struct option long_options[] =
-    {
-      {"run", required_argument, NULL, 'r'},
-      {"stop", required_argument, NULL, 's'},
-      {NULL, 0, NULL, 0}
-    };
+  _onexit(exitHandler);
 
   AllocConsole();
   if (!SetConsoleCtrlHandler(consoleHandler, TRUE)){
@@ -232,7 +230,10 @@ int main(int argc, char** argv){
 
   switch (action){
     case WSL_RUN:
-      HANDLE hThread = startWslServiceThreadInteractiveA(argv[2], 0);
+      instanceData.uid = 0;
+      instanceData.distributionName = optDistribution;
+      instanceData.command = optService;
+      HANDLE hThread = startWslServiceInteractive(&instanceData);
       while(TRUE){
         DWORD result = WaitForSingleObject(hThread, INFINITE);
         if (result == WAIT_OBJECT_0){

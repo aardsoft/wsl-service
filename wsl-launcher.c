@@ -15,7 +15,7 @@ STARTUPINFO startupInfo                = {0};
 WSL_DISTRIBUTION_FLAGS distributionFlags = 0;
 ULONG defaultUID = 0;
 
-void wslServiceThreadInteractive(WCHAR* serviceName){
+void wslServiceThreadInteractive(WslInstance *instanceData){
   TCHAR wslExecutable[copyBufferSize];
   size_t maxSz = STRSAFE_MAX_CCH * sizeof(TCHAR);
   LPCWSTR formatString = TEXT(BASH_START_TEMPLATE);
@@ -27,7 +27,7 @@ void wslServiceThreadInteractive(WCHAR* serviceName){
     wslLog(L_ERROR, L"Size %u is bigger than maximum allowed %u\n", copyBufferTCharSize, maxSz);
     return;
   }
-  if (FAILED(StringCbPrintf(wslExecutable, copyBufferTCharSize, formatString, serviceName))){
+  if (FAILED(StringCbPrintf(wslExecutable, copyBufferTCharSize, formatString, instanceData->command))){
     wslLog(L_ERROR, L"Unable to prepare WSL executable string\n");
     return;
   }
@@ -39,31 +39,34 @@ void wslServiceThreadInteractive(WCHAR* serviceName){
     &exitCode);
 }
 
-HANDLE startWslServiceThreadInteractive(LPWSTR serviceName, ULONG uid){
-  LPWSTR service = _wcsdup(serviceName);
+HANDLE startWslServiceInteractive(WslInstance *instanceData){
+  //LPWSTR service = _wcsdup(serviceName);
   HANDLE hThread;
   DWORD threadId;
 
-  PCWSTR defaultDist = defaultWslDistributionName();
-  if (defaultDist == NULL){
-    wslLogText(L_ERROR, L"Unable to determine default distribution name.\n");
-    wslLogText(L_ERROR, L"Is WSL initialized?\n");
-    return NULL;
-  } else {
-    wslLog(L_DEBUG, L"Default distribution is: %s\n", defaultDist);
+  if (instanceData->distributionName == NULL){
+    LPWSTR defaultDist = defaultWslDistributionName();
+    if (defaultDist == NULL){
+      wslLogText(L_ERROR, L"Unable to determine default distribution name.\n");
+      wslLogText(L_ERROR, L"Is WSL initialized?\n");
+      return NULL;
+    } else {
+      wslLog(L_DEBUG, L"Default distribution is: %s\n", defaultDist);
+      instanceData->distributionName = defaultDist;
+    }
   }
 
-  if (!WslIsDistributionRegistered(defaultDist)){
-    wslLog(L_ERROR, L"Distribution '%s' is not registered\n", defaultDist);
+  if (!WslIsDistributionRegistered(instanceData->distributionName)){
+    wslLog(L_ERROR, L"Distribution '%s' is not registered\n", instanceData->distributionName);
     return NULL;
   } else {
-    wslLog(L_DEBUG, L"Distribution '%s' is available\n", defaultDist);
+    wslLog(L_DEBUG, L"Distribution '%s' is available\n", instanceData->distributionName);
   }
 
-  wslSetUid(uid, TRUE);
+  wslSetUid(instanceData->uid, TRUE);
   hThread = CreateThread(NULL,0,
                          (LPTHREAD_START_ROUTINE)wslServiceThreadInteractive,
-                         service,0,&threadId);
+                         instanceData,0,&threadId);
   if (hThread == NULL){
     wslLog(L_ERROR, L"CreateThread() failed, error %u\n", GetLastError());
     wslRestoreUid();
@@ -78,18 +81,20 @@ HANDLE startWslServiceThreadInteractive(LPWSTR serviceName, ULONG uid){
   return hThread;
 }
 
-HANDLE startWslServiceThreadInteractiveA(LPCSTR serviceName, ULONG uid){
+HANDLE startWslServiceInteractiveA(LPCSTR serviceName, LPCSTR distributionName, WslInstance *instanceData){
   LPCSTR serviceNameA = strdup(serviceName);
   LPWSTR serviceNameW;
 
+  // calculate the buffer size for the converted string
   int len = MultiByteToWideChar(CP_ACP, 0, serviceNameA, -1,
-                                serviceNameW, 0);
+                                NULL, 0);
 
   if (len == 0){
     wslLogText(L_ERROR, L"Unable to get buffer length\n");
     return NULL;
   }
 
+  // if all worked out, allocate space, and convert the string
   serviceNameW = (LPWSTR)malloc(len * sizeof(wchar_t));
   len = MultiByteToWideChar(CP_ACP, 0, serviceNameA, -1,
                             serviceNameW, len);
@@ -99,13 +104,17 @@ HANDLE startWslServiceThreadInteractiveA(LPCSTR serviceName, ULONG uid){
     return NULL;
   }
 
-  HANDLE handle = startWslServiceThreadInteractive(serviceNameW, uid);
+  instanceData->command = serviceNameW;
+
+  //HANDLE handle = startWslServiceInteractive(serviceNameW, uid);
+  HANDLE handle = startWslServiceInteractive(instanceData);
   //free(serviceNameW);
   return handle;
 }
 
 BOOL terminateWslProcess(){
-
+  ///TODO
+  return FALSE;
 }
 
 LPWSTR defaultWslDistributionName(){

@@ -12,23 +12,47 @@
 extern PROCESS_INFORMATION processInformation;
 extern STARTUPINFO startupInfo;
 
+typedef struct _WslInstance WslInstance;
+
+struct _WslInstance{
+    LPCWSTR distributionName;
+    LPCWSTR command;
+    ULONG uid;
+    BOOL useCurrentWorkingDirectory;
+    HANDLE stdIn;
+    HANDLE stdOut;
+    HANDLE stdErr;
+    HANDLE* process;
+};
+
 /** Start a service inside of WSL
  *
  * @param serviceName the name of a service. Must be configured on Linux side
  * @param uid the UID to use for the service
+ * @return a handle to the process running a non-interactive WSL instance
  */
-HANDLE startWslServiceThreadInteractive(LPWSTR serviceName, ULONG uid);
+HANDLE startWslService(LPWSTR serviceName, ULONG uid);
+/** Start an interactive service inside of WSL
+ *
+ * Typically using an interactive call in a service should be avoided, though
+ * it is useful for interactive tools.
+ *
+ * @param serviceName the name of a service. Must be configured on Linux side
+ * @param uid the UID to use for the service
+ * @return a handle to the thread running an interactive WSL instance
+ */
+HANDLE startWslServiceInteractive(WslInstance *instanceData);
 /** A convenience wrapper around startWslServiceThreadInteractive, taking an
  * 8-bit string as argument, and converting it to wide.
  */
-HANDLE startWslServiceThreadInteractiveA(LPCSTR serviceName, ULONG uid);
+HANDLE startWslServiceInteractiveA(LPCSTR serviceName, LPCSTR distributionName, WslInstance *instanceData);
 /** This implements the WSL service thread (i.e., a Windows thread wrapper
  * around the service launched on WSL side)
  *
  * This function probably never needs to be called directly, but is used by
  * the startWslServiceThreadInteractive functions.
  */
-void wslServiceThreadInteractive(WCHAR* serviceName);
+void wslServiceThreadInteractive(WslInstance *instanceData);
 LPWSTR defaultWslDistributionName();
 /** Set the default UID
  *

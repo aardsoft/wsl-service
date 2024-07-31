@@ -82,6 +82,7 @@ BOOL wslLogInit(){
   }
 
   wslLogInitialized = TRUE;
+  return wslLogInitialized;
 }
 
 void setWslLogInteractive(BOOL logType){
