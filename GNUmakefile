@@ -1,3 +1,8 @@
+UUID := $(shell uuidgen)
+TAG := $(shell git describe --abbrev=0 --tags --always)
+COMMIT_COUNT := $(shell git rev-list $(TAG).. --count)
+VERSION := $(TAG).$(COMMIT_COUNT)
+
 ifeq ($(toolchain), msvc)
 CROS=
 CC=cl
@@ -14,18 +19,13 @@ endif
 Q=@
 #LDFLAGS=-lwslapi.a
 #LDFLAGS=-lpopt.dll
-CFLAGS=-DUNICODE -D_UNICODE -Wall
+CFLAGS=-DUNICODE -D_UNICODE -Wall -DWSL_SERVICE_VERSION='"$(VERSION)"'
 WIXL=wixl
 WIXLFLAGS=-a x64
 LIBINTL_DLL=gettext/x86_64/usr/bin/libintl-8.dll
 POPT_DLL=build/popt/src/libpopt.dll
 INCLUDES=-Ipopt/src/ -Ibuild
 OUT=build
-
-UUID := $(shell uuidgen)
-TAG := $(shell git describe --abbrev=0 --tags --always)
-COMMIT_COUNT := $(shell git rev-list $(TAG).. --count)
-VERSION := $(TAG).$(COMMIT_COUNT)
 
 # uncomment to debug variables
 #$(foreach v, $(.VARIABLES), $(info $(v) = $($(v))))

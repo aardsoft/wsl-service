@@ -166,6 +166,7 @@ int main(int argc, char** argv){
       "Sent test events to Windows EventLog" },
     { "default-uid", '\0', POPT_ARG_INT, &optDefaultUid, 'I',
       "Set the default UID"},
+    { "version", '\0', 0, 0, 'V', "Print version information"},
     POPT_AUTOHELP
     { NULL, 0, 0, NULL, 0 }
   };
@@ -213,6 +214,11 @@ int main(int argc, char** argv){
       case 's':
         if (action != WSL_NONE) errDuplicateActions();
         action = WSL_STOP;
+        break;
+      case 'V':
+        printf("wsl-tool from wsl-service, version %s\n\n", WSL_SERVICE_VERSION);
+        wprintf(L"Use --help for usage details, or visit https://github.com/aardsoft/wsl-service for updates\n");
+        exit(0);
         break;
       case 'L':
         setWslLogLevel(F_EVENTLOG, L_DEBUG);

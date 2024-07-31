@@ -8,7 +8,16 @@
              Comments='This installer contains the data to install and configure WSL services. See https://github.com/aardsoft/wsl-service for details' Manufacturer='Aardsoft Oy'
              InstallerVersion='200' Languages='1033' Compressed='yes' SummaryCodepage='1252' />
 
+    <Upgrade Id='4d51cb9e-cffa-4005-a67f-5454adb28b08'>
+      <UpgradeVersion Minimum="VERSION" OnlyDetect="yes" Property="NEWERVERSIONDETECTED"/>
+      <UpgradeVersion Minimum="0.0.0" Maximum="VERSION" IncludeMinimum="yes" IncludeMaximum="no" Property="OLDERVERSIONBEINGUPGRADED"/>
+    </Upgrade>
+
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallInitialize" />
+    </InstallExecuteSequence>
     <MediaTemplate EmbedCab="yes" />
 
     <Directory Id='TARGETDIR' Name='SourceDir'>
