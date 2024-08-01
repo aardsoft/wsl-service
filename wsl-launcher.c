@@ -15,10 +15,29 @@ STARTUPINFO startupInfo                = {0};
 WSL_DISTRIBUTION_FLAGS distributionFlags = 0;
 ULONG defaultUID = 0;
 
+BOOL wslDistributionIsRegistered(LPCWSTR distributionName){
+  if (!WslIsDistributionRegistered(distributionName)){
+    wslLog(L_ERROR, L"Distribution '%s' is not registered\n", distributionName);
+    return FALSE;
+  } else {
+    wslLog(L_DEBUG, L"Distribution '%s' is available\n", distributionName);
+    return TRUE;
+  }
+}
+
 void wslServiceThreadInteractive(WslInstance *instanceData){
   TCHAR wslExecutable[copyBufferSize];
   size_t maxSz = STRSAFE_MAX_CCH * sizeof(TCHAR);
-  LPCWSTR formatString = TEXT(BASH_START_TEMPLATE);
+  LPCWSTR formatString;
+
+  switch(instanceData->action){
+    case WSL_START:
+      formatString = TEXT(BASH_START_TEMPLATE);
+      break;
+    case WSL_STOP:
+      formatString = TEXT(BASH_STOP_TEMPLATE);
+      break;
+  }
 
   DWORD exitCode;
   PCWSTR defaultDistW = defaultWslDistributionName();
@@ -40,77 +59,28 @@ void wslServiceThreadInteractive(WslInstance *instanceData){
 }
 
 HANDLE startWslServiceInteractive(WslInstance *instanceData){
-  //LPWSTR service = _wcsdup(serviceName);
-  HANDLE hThread;
-  DWORD threadId;
-
-  if (instanceData->distributionName == NULL){
-    LPWSTR defaultDist = defaultWslDistributionName();
-    if (defaultDist == NULL){
-      wslLogText(L_ERROR, L"Unable to determine default distribution name.\n");
-      wslLogText(L_ERROR, L"Is WSL initialized?\n");
-      return NULL;
-    } else {
-      wslLog(L_DEBUG, L"Default distribution is: %s\n", defaultDist);
-      instanceData->distributionName = defaultDist;
-    }
-  }
-
-  if (!WslIsDistributionRegistered(instanceData->distributionName)){
-    wslLog(L_ERROR, L"Distribution '%s' is not registered\n", instanceData->distributionName);
-    return NULL;
-  } else {
-    wslLog(L_DEBUG, L"Distribution '%s' is available\n", instanceData->distributionName);
-  }
-
-  wslSetUid(instanceData->uid, TRUE);
-  hThread = CreateThread(NULL,0,
-                         (LPTHREAD_START_ROUTINE)wslServiceThreadInteractive,
-                         instanceData,0,&threadId);
-  if (hThread == NULL){
-    wslLog(L_ERROR, L"CreateThread() failed, error %u\n", GetLastError());
-    wslRestoreUid();
-    return NULL;
-  } else {
-    wslLogText(L_DEBUG, L"WSL launched\n");
-    ///TODO: figure out a better way to delay resetting the UID
-    Sleep(2000);
-    wslRestoreUid();
-  }
-
-  return hThread;
+  instanceData->action = WSL_START;
+  return wslThreadInteractive(instanceData, (LPTHREAD_START_ROUTINE)wslServiceThreadInteractive, TRUE);
 }
 
 HANDLE startWslServiceInteractiveA(LPCSTR serviceName, LPCSTR distributionName, WslInstance *instanceData){
-  LPWSTR serviceNameW = NULL;
-  LPWSTR distributionNameW = NULL;
-
-  int r = -1;
-
-  if (serviceName != NULL){
-    r = wslAtoW(serviceName, &serviceNameW);
-    if (r == -1)
-      return NULL;
-    else
-      instanceData->command = serviceNameW;
-  }
-
-  if (distributionName != NULL){
-    r = wslAtoW(distributionName, &distributionNameW);
-    if (r == -1)
-      return NULL;
-    else
-      instanceData->distributionName = distributionNameW;
-  }
-
-  HANDLE handle = startWslServiceInteractive(instanceData);
-  //free(serviceNameW);
-  return handle;
+  instanceData->action = WSL_START;
+  return wslServiceInteractiveA(serviceName, distributionName, instanceData);
 }
 
 BOOL terminateWslProcess(){
   ///TODO
   return FALSE;
+}
+
+HANDLE stopWslServiceInteractive(WslInstance *instanceData){
+  instanceData->action = WSL_STOP;
+  return wslThreadInteractive(instanceData, (LPTHREAD_START_ROUTINE)wslServiceThreadInteractive, FALSE);
+}
+
+HANDLE stopWslServiceInteractiveA(LPCSTR serviceName, LPCSTR distributionName, WslInstance *instanceData){
+  instanceData->action = WSL_STOP;
+  return wslServiceInteractiveA(serviceName, distributionName, instanceData);
 }
 
 LPWSTR defaultWslDistributionName(){
@@ -305,4 +275,79 @@ int wslAtoW(LPCSTR input, LPWSTR *output){
   }
 
   return len;
+}
+
+HANDLE wslServiceInteractiveA(LPCSTR serviceName, LPCSTR distributionName, WslInstance *instanceData){
+  LPWSTR serviceNameW = NULL;
+  LPWSTR distributionNameW = NULL;
+
+  int r = -1;
+
+  if (serviceName != NULL){
+    r = wslAtoW(serviceName, &serviceNameW);
+    if (r == -1)
+      return NULL;
+    else
+      instanceData->command = serviceNameW;
+  }
+
+  if (distributionName != NULL){
+    r = wslAtoW(distributionName, &distributionNameW);
+    if (r == -1)
+      return NULL;
+    else
+      instanceData->distributionName = distributionNameW;
+  }
+
+  HANDLE handle;
+
+  switch(instanceData->action){
+    case WSL_START:
+      handle = startWslServiceInteractive(instanceData);
+      break;
+    case WSL_STOP:
+      handle = stopWslServiceInteractive(instanceData);
+      break;
+  }
+
+  //free(serviceNameW);
+  return handle;
+}
+
+// TODO, add a flag to only run it if wsl is already running
+HANDLE wslThreadInteractive(WslInstance *instanceData, LPTHREAD_START_ROUTINE startFunction, BOOL startWsl){
+  HANDLE hThread;
+  DWORD threadId;
+
+  if (instanceData->distributionName == NULL){
+    LPWSTR defaultDist = defaultWslDistributionName();
+    if (defaultDist == NULL){
+      wslLogText(L_ERROR, L"Unable to determine default distribution name.\n");
+      wslLogText(L_ERROR, L"Is WSL initialized?\n");
+      return NULL;
+    } else {
+      wslLog(L_DEBUG, L"Default distribution is: %s\n", defaultDist);
+      instanceData->distributionName = defaultDist;
+    }
+  }
+
+  if (!wslDistributionIsRegistered(instanceData->distributionName))
+    return NULL;
+
+  wslSetUid(instanceData->uid, TRUE);
+  hThread = CreateThread(NULL,0,
+                         startFunction,
+                         instanceData,0,&threadId);
+  if (hThread == NULL){
+    wslLog(L_ERROR, L"CreateThread() failed, error %u\n", GetLastError());
+    wslRestoreUid();
+    return NULL;
+  } else {
+    wslLogText(L_DEBUG, L"WSL launched\n");
+    ///TODO: figure out a better way to delay resetting the UID
+    Sleep(2000);
+    wslRestoreUid();
+  }
+
+  return hThread;
 }

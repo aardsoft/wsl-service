@@ -93,7 +93,7 @@ dist-clean: clean
 
 clean:
 	$(Q)echo "Cleaning up"
-	$(Q)rm -f $(OUT)/*.bin $(OUT)/*.exe $(OUT)/*.rc $(OUT)/*.dll $(OUT)/*.o $(OUT)/*.ro $(OUT)/*.a $(OUT)/*.msi $(OUT)//*.h $(OUT)/*.res
+	$(Q)rm -f $(OUT)/*.bin $(OUT)/*.exe $(OUT)/*.rc $(OUT)/*.dll $(OUT)/*.o $(OUT)/*.ro $(OUT)/*.a $(OUT)/*.msi $(OUT)//*.h $(OUT)/*.res $(OUT)/*.sh $(OUT)/*.wxs
 
 $(OUT)/wsl-service.msi: $(OUT)/wsl-service.exe $(OUT)/wsl-tool.exe $(OUT)/wsl-service-events.dll wsl-service.wxs copy-mingw-dlls
 	$(Q)echo "MSI $@"

@@ -9,12 +9,12 @@
 int ctrl_count = 0;
 
 enum WSL_ACTION{
-  WSL_NONE,
-  WSL_RUN,
-  WSL_STOP,
-  WSL_EXEC,
-  WSL_SETUID,
-  WSL_IMPORT
+  WSL_ACTION_NONE,
+  WSL_ACTION_RUN,
+  WSL_ACTION_STOP,
+  WSL_ACTION_EXEC,
+  WSL_ACTION_SETUID,
+  WSL_ACTION_IMPORT
 };
 
 /*
@@ -103,7 +103,7 @@ void errDuplicateActions(){
 
 int main(int argc, char** argv){
   char ch;
-  int action = WSL_NONE;
+  int action = WSL_ACTION_NONE;
   poptContext optCon;
 
   int optDefaultUid;
@@ -189,14 +189,14 @@ int main(int argc, char** argv){
   while ((ch = poptGetNextOpt(optCon)) >= 0){
     switch (ch){
       case 'e':
-        if (action != WSL_NONE) errDuplicateActions();
-        action = WSL_EXEC;
+        if (action != WSL_ACTION_NONE) errDuplicateActions();
+        action = WSL_ACTION_EXEC;
         break;
       case 'u':
         break;
       case 'i':
-        if (action != WSL_NONE) errDuplicateActions();
-        action = WSL_IMPORT;
+        if (action != WSL_ACTION_NONE) errDuplicateActions();
+        action = WSL_ACTION_IMPORT;
         break;
       case 'p':
         break;
@@ -209,16 +209,16 @@ int main(int argc, char** argv){
       case 'U':
         break;
       case 'I':
-        if (action != WSL_NONE) errDuplicateActions();
-        action = WSL_SETUID;
+        if (action != WSL_ACTION_NONE) errDuplicateActions();
+        action = WSL_ACTION_SETUID;
         break;
       case 'r':
-        if (action != WSL_NONE) errDuplicateActions();
-        action = WSL_RUN;
+        if (action != WSL_ACTION_NONE) errDuplicateActions();
+        action = WSL_ACTION_RUN;
         break;
       case 's':
-        if (action != WSL_NONE) errDuplicateActions();
-        action = WSL_STOP;
+        if (action != WSL_ACTION_NONE) errDuplicateActions();
+        action = WSL_ACTION_STOP;
         break;
       case 'V':
         printf("wsl-tool from wsl-service, version %s\n\n", WSL_SERVICE_VERSION);
@@ -235,11 +235,13 @@ int main(int argc, char** argv){
     }
   }
 
+  HANDLE hThread;
+
   switch (action){
-    case WSL_RUN:
+    case WSL_ACTION_RUN:
       instanceData.uid = 0;
       instanceData.distributionName = optDistribution;
-      HANDLE hThread = startWslServiceInteractiveA(optServiceA, NULL, &instanceData);
+      hThread = startWslServiceInteractiveA(optServiceA, NULL, &instanceData);
       while(TRUE){
         DWORD result = WaitForSingleObject(hThread, INFINITE);
         if (result == WAIT_OBJECT_0){
@@ -256,10 +258,28 @@ int main(int argc, char** argv){
         Sleep(1000);
       }
       break;
-    case WSL_STOP:
+    case WSL_ACTION_STOP:
+      instanceData.uid = 0;
+      instanceData.distributionName = optDistribution;
+      hThread = stopWslServiceInteractiveA(optServiceA, NULL, &instanceData);
+      while(TRUE){
+        DWORD result = WaitForSingleObject(hThread, INFINITE);
+        if (result == WAIT_OBJECT_0){
+          DWORD exitCode;
+          BOOL ret = GetExitCodeThread(hThread, &exitCode);
+          if (ret) {
+            wprintf(L"Thread exited: %i\n", exitCode);
+            return 0;
+          } else {
+            // TODO, getting exit code status went wrong
+          }
+        }
+
+        Sleep(1000);
+      }
       break;
-    case WSL_SETUID:
-      action = WSL_STOP;
+    case WSL_ACTION_SETUID:
+      action = WSL_ACTION_STOP;
       if (optDistribution == NULL){
         wprintf(L"No distribution specified, and no default distribution found, exiting.");
         return -1;
@@ -275,7 +295,7 @@ int main(int argc, char** argv){
       WslConfigureDistribution(optDistribution, optDefaultUid, distFlags);
       return 0;
       break;
-    case WSL_NONE:
+    case WSL_ACTION_NONE:
       wprintf(L"Error: need an action\n");
       exit(1);
     default:
